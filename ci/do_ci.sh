@@ -122,7 +122,7 @@ function bazel_binary_build() {
   # This is a workaround for https://github.com/bazelbuild/bazel/issues/11834
   [[ -n "${ENVOY_RBE}" ]] && rm -rf bazel-bin/"${ENVOY_BIN}"*
 
-  bazel build "${BAZEL_BUILD_OPTIONS[@]}" --remote_download_toplevel -c "${COMPILE_TYPE}" "${BUILD_TARGET}" ${CONFIG_ARGS}
+  bazel build "${BAZEL_BUILD_OPTIONS[@]}" --define wasm=wasmtime --remote_download_toplevel -c "${COMPILE_TYPE}" "${BUILD_TARGET}" ${CONFIG_ARGS}
   collect_build_profile "${BINARY_TYPE}"_build
 
   # Copy the built envoy binary somewhere that we can access outside of the
@@ -132,17 +132,17 @@ function bazel_binary_build() {
   if [[ "${COMPILE_TYPE}" == "dbg" || "${COMPILE_TYPE}" == "opt" ]]; then
     # Generate dwp file for debugging since we used split DWARF to reduce binary
     # size
-    bazel build "${BAZEL_BUILD_OPTIONS[@]}" --remote_download_toplevel -c "${COMPILE_TYPE}" "${BUILD_DEBUG_INFORMATION}" ${CONFIG_ARGS}
+    bazel build "${BAZEL_BUILD_OPTIONS[@]}" --define wasm=wasmtime --remote_download_toplevel -c "${COMPILE_TYPE}" "${BUILD_DEBUG_INFORMATION}" ${CONFIG_ARGS}
     # Copy the debug information
     cp -f bazel-bin/"${ENVOY_BIN}".dwp "${FINAL_DELIVERY_DIR}"/envoy.dwp
   fi
 
   # Validation tools for the tools image.
-  bazel build "${BAZEL_BUILD_OPTIONS[@]}" --remote_download_toplevel -c "${COMPILE_TYPE}" \
+  bazel build "${BAZEL_BUILD_OPTIONS[@]}" --define wasm=wasmtime --remote_download_toplevel -c "${COMPILE_TYPE}" \
     //test/tools/schema_validator:schema_validator_tool ${CONFIG_ARGS}
 
   # Build su-exec utility
-  bazel build "${BAZEL_BUILD_OPTIONS[@]}" --remote_download_toplevel -c "${COMPILE_TYPE}" external:su-exec
+  bazel build "${BAZEL_BUILD_OPTIONS[@]}" --define wasm=wasmtime --remote_download_toplevel -c "${COMPILE_TYPE}" external:su-exec
   cp_binary_for_image_build "${BINARY_TYPE}" "${COMPILE_TYPE}" "${EXE_NAME}"
 }
 
@@ -518,6 +518,7 @@ case $CI_TARGET in
             | tar xfO - envoy > distribution/custom/envoy
         # Build the packages
         bazel build "${BAZEL_BUILD_OPTIONS[@]}" \
+              --define wasm=wasmtime \
               --remote_download_toplevel \
               -c opt \
               --//distribution:envoy-binary=//distribution:custom/envoy \
@@ -671,6 +672,7 @@ case $CI_TARGET in
         # Grab the schema_validator_tool
         # TODO(phlax): bundle this with the release when #26390 is resolved
         bazel build "${BAZEL_BUILD_OPTIONS[@]}" "${BAZEL_RELEASE_OPTIONS[@]}" \
+              --define wasm=wasmtime \
               --remote_download_toplevel \
               //test/tools/schema_validator:schema_validator_tool.stripped
         # Copy schema_validator_tool to binary export directory
