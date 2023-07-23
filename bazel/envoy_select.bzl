@@ -152,15 +152,15 @@ def envoy_select_wasm_v8(xs):
         # TODO(phlax): re-enable once issues with llvm profiler are resolved
         #   (see https://github.com/envoyproxy/envoy/issues/24164)
         "@envoy//bazel:coverage_build": [],
-        "//conditions:default": xs,  # implicit default (v8)
+        "//conditions:default": [],  # implicit default (v8)
     })
 
 # Selects True or False depending on the Wasm runtimes enabled in the current build.
 def envoy_select_wasm_v8_bool():
     return select({
-        "@envoy//bazel:wasm_v8": True,
+        "@envoy//bazel:wasm_v8": False,
         "@envoy//bazel:wasm_wamr": False,
-        "@envoy//bazel:wasm_wasmtime": False,
+        "@envoy//bazel:wasm_wasmtime": True,
         "@envoy//bazel:wasm_wavm": False,
         "@envoy//bazel:wasm_disabled": False,
         # TODO(phlax): re-enable once issues with llvm profiler are resolved
@@ -187,5 +187,5 @@ def envoy_select_wasm_wavm(xs):
 def envoy_select_wasm_wasmtime(xs):
     return select({
         "@envoy//bazel:wasm_wasmtime": xs,
-        "//conditions:default": [],
+        "//conditions:default": xs,
     })
